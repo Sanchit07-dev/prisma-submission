@@ -9,7 +9,7 @@ const {
 const { parsePagination, buildMeta } = require("../utils/pagination");
 
 async function create(req, res) {
-  const { imageUrl, caption, location, authorId } = req.body;
+  const { imageUrl, caption, location, authorId } = req.body || {};
 
   if (!imageUrl || !authorId) {
     return res
@@ -91,6 +91,9 @@ async function list(req, res) {
 
 async function getOne(req, res) {
   const id = parseInt(req.params.id, 10);
+  if (!Number.isInteger(id)) {
+    return res.status(400).json({ error: "Invalid post ID" });
+  }
   const post = await getPostById(id);
 
   if (!post) {
@@ -102,7 +105,10 @@ async function getOne(req, res) {
 
 async function update(req, res) {
   const id = parseInt(req.params.id, 10);
-  const { caption, location } = req.body;
+  if (!Number.isInteger(id)) {
+    return res.status(400).json({ error: "Invalid post ID" });
+  }
+  const { caption, location } = req.body || {};
 
   const data = {};
   if (caption !== undefined) data.caption = caption;
@@ -121,6 +127,9 @@ async function update(req, res) {
 
 async function remove(req, res) {
   const id = parseInt(req.params.id, 10);
+  if (!Number.isInteger(id)) {
+    return res.status(400).json({ error: "Invalid post ID" });
+  }
 
   try {
     await deletePost(id);

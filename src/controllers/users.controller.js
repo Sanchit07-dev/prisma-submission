@@ -10,7 +10,7 @@ const {
 const { parsePagination, buildMeta } = require("../utils/pagination");
 
 async function create(req, res) {
-  const { username, email, fullname, bio } = req.body;
+  const { username, email, fullname, bio } = req.body || {};
 
   if (!username || !email || !fullname) {
     return res
@@ -94,6 +94,9 @@ async function list(req, res) {
 
 async function getOne(req, res) {
   const id = parseInt(req.params.id, 10);
+  if (!Number.isInteger(id)) {
+    return res.status(400).json({ error: "Invalid user ID" });
+  }
   const user = await getUserById(id);
 
   if (!user) {
@@ -105,7 +108,10 @@ async function getOne(req, res) {
 
 async function update(req, res) {
   const id = parseInt(req.params.id, 10);
-  const { fullname, bio, isPrivate } = req.body;
+  if (!Number.isInteger(id)) {
+    return res.status(400).json({ error: "Invalid user ID" });
+  }
+  const { fullname, bio, isPrivate } = req.body || {};
 
   const data = {};
   if (fullname !== undefined) data.fullname = fullname;
@@ -125,6 +131,9 @@ async function update(req, res) {
 
 async function remove(req, res) {
   const id = parseInt(req.params.id, 10);
+  if (!Number.isInteger(id)) {
+    return res.status(400).json({ error: "Invalid user ID" });
+  }
 
   try {
     await deleteUser(id);
