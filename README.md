@@ -78,7 +78,7 @@ npm start
 - `GET /users/:id/liked-posts` - Paginated posts liked by user (newest first)
 
 ### Posts
-- `GET /posts` - List posts (supports `search`, `location`, `sortBy=likes`, pagination, includes author summary and like count)
+- `GET /posts` - List posts (supports `search`, `location`, `from`, `to`, `sortBy`, `order`, pagination, includes author summary and like count)
 - `POST /posts` - Create post (requires `imageUrl` and `authorId`)
 - `GET /posts/:id` - Get post by ID (includes author summary and like count)
 - `PATCH /posts/:id` - Update post caption or location (`authorId` immutable)

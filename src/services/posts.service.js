@@ -13,18 +13,24 @@ async function createPost({ imageUrl, caption, location, authorId }) {
   });
 }
 
-async function listPosts({ skip, take, search, location, sortBy = "createdAt", order = "desc" }) {
+async function listPosts({ skip, take, search, location, from, to, sortBy = "createdAt", order = "desc" }) {
   const where = {};
 
   if (search) {
-    where.OR = [
-      { caption: { contains: search } },
-      { location: { contains: search } },
-    ];
+    where.caption = { contains: search };
   }
 
   if (location) {
-    where.location = { contains: location };
+    where.location = {
+      startsWith: location,
+      endsWith: location,
+    };
+  }
+
+  if (from || to) {
+    where.createdAt = {};
+    if (from) where.createdAt.gte = from;
+    if (to) where.createdAt.lt = to;
   }
 
   let orderBy;

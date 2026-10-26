@@ -50,12 +50,35 @@ async function list(req, res) {
       .json({ error: "sortBy must be one of: createdAt, updatedAt, likes" });
   }
 
+  const allowedOrder = ["asc", "desc"];
+  if (req.query.order !== undefined && !allowedOrder.includes(order)) {
+    return res.status(400).json({ error: "order must be asc or desc" });
+  }
+
+  let fromDate;
+  if (req.query.from !== undefined) {
+    fromDate = new Date(req.query.from);
+    if (isNaN(fromDate.getTime())) {
+      return res.status(400).json({ error: "from and to must be valid dates" });
+    }
+  }
+
+  let toDate;
+  if (req.query.to !== undefined) {
+    toDate = new Date(req.query.to);
+    if (isNaN(toDate.getTime())) {
+      return res.status(400).json({ error: "from and to must be valid dates" });
+    }
+  }
+
   const { page, limit, skip, take } = pagination;
   const { total, data } = await listPosts({
     skip,
     take,
     search,
     location,
+    from: fromDate,
+    to: toDate,
     sortBy,
     order,
   });
