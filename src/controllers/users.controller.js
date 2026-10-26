@@ -41,6 +41,18 @@ async function list(req, res) {
 
   const { search, sortBy = "createdAt", order = "desc" } = req.query;
 
+  const allowedSortBy = ["createdAt", "username", "fullname"];
+  if (req.query.sortBy !== undefined && !allowedSortBy.includes(sortBy)) {
+    return res
+      .status(400)
+      .json({ error: "sortBy must be one of: createdAt, username, fullname" });
+  }
+
+  const allowedOrder = ["asc", "desc"];
+  if (req.query.order !== undefined && !allowedOrder.includes(order)) {
+    return res.status(400).json({ error: "order must be asc or desc" });
+  }
+
   let isPrivate;
   if (req.query.isPrivate !== undefined) {
     if (req.query.isPrivate === "true") {

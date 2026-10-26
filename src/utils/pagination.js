@@ -31,6 +31,10 @@ function parsePagination(query) {
     }
   }
 
+  if (limit > 50) {
+    limit = 50;
+  }
+
   const skip = (page - 1) * limit;
   const take = limit;
 
