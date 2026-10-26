@@ -5,6 +5,7 @@ const {
   updateUser,
   deleteUser,
   getUserPosts,
+  getUserLikedPosts,
 } = require("../services/users.service");
 const { parsePagination, buildMeta } = require("../utils/pagination");
 
@@ -147,6 +148,29 @@ async function getPosts(req, res) {
   });
 }
 
+async function getLikedPosts(req, res) {
+  const id = parseInt(req.params.id, 10);
+
+  let pagination;
+  try {
+    pagination = parsePagination(req.query);
+  } catch (err) {
+    return res.status(err.status || 400).json({ error: err.message });
+  }
+
+  const { page, limit, skip, take } = pagination;
+  const result = await getUserLikedPosts(id, { skip, take });
+
+  if (!result) {
+    return res.status(404).json({ error: "User not found" });
+  }
+
+  return res.status(200).json({
+    data: result.data,
+    meta: buildMeta(page, limit, result.total),
+  });
+}
+
 module.exports = {
   create,
   list,
@@ -154,4 +178,5 @@ module.exports = {
   update,
   remove,
   getPosts,
+  getLikedPosts,
 };

@@ -1,80 +1,88 @@
-# Prisma Submission API
+# InstaLite Backend API (Prisma Submission)
 
-A RESTful backend service built with Express.js, Prisma ORM, and SQLite for managing users and posts.
+A RESTful backend service built with Express.js, Prisma ORM, and SQLite supporting relational data models, cascading deletes, atomic bulk seeding, and pagination.
 
-## 🚀 Features
+## 🚀 Features & Relations
 
-- **Users Management**: Create, view, update, and manage users.
-- **Posts Management**: Create and manage posts linked to users with support for captions, image URLs, and locations.
-- **Prisma ORM**: Type-safe database client using SQLite.
-- **Health Check**: `/health` endpoint to monitor server uptime.
+- **One-to-Many (`User` → `Post`)**: Each post belongs to a required author (`authorId`), with cascading delete when the author is deleted.
+- **Many-to-Many (`User` ↔ `Post` via `Like`)**: Explicit join table with a composite primary key `@@id([userId, postId])` preventing duplicate likes and supporting cascading deletes.
+- **Atomic Bulk Seeding**: Re-seeds 12 users, 24 posts, and 29 likes in batch operations with username/post key resolution.
+- **Advanced Querying**:
+  - Pagination (`page`, `limit`) with standard metadata (`{ page, limit, total, totalPages }`).
+  - Filtering: `hasPosts=true|false`, `isPrivate=true|false`, `location`, `search`.
+  - Sorting: `sortBy=createdAt|updatedAt|likes` with deterministic tie-breaking.
+  - Safe nested projections: nested user summaries return only `{ id, username, fullname }`, never leaking emails.
 
 ## 📁 Project Structure
 
 ```
 ├── prisma/
-│   ├── migrations/     # Database migration history
-│   └── schema.prisma   # Prisma schema models (User, Post)
+│   ├── migrations/       # Migration history (init, add_post_author, add_likes)
+│   ├── schema.prisma     # Prisma schema models (User, Post, Like)
+│   ├── seed-data.js      # Relational seed data fixtures
+│   └── seed.js           # Relational bulk seed runner
 ├── src/
-│   ├── controllers/    # Route controllers
-│   ├── routes/         # Express routes
-│   ├── services/       # Business logic & database operations
-│   ├── db.js           # Prisma client initialization
-│   ├── index.js        # Express app setup and server entry
-│   └── server.js       # App export
-├── .env.example        # Environment variable template
+│   ├── controllers/      # Route controllers (users, posts, likes)
+│   ├── routes/           # Express routes (users, posts)
+│   ├── services/         # Business logic & Prisma queries
+│   ├── utils/            # Utilities (pagination parsing and metadata)
+│   ├── db.js             # Prisma client initialization
+│   ├── index.js          # Express app entry
+│   └── server.js         # App export
+├── .env.example
 ├── package.json
 └── README.md
 ```
 
 ## 🛠️ Getting Started
 
-### 1. Prerequisites
-- Node.js (v18 or higher)
-- npm
-
-### 2. Installation
+### 1. Installation
 ```bash
 npm install
 ```
 
-### 3. Environment Setup
-Create a `.env` file from the example:
+### 2. Environment Setup
 ```bash
 cp .env.example .env
 ```
 
-### 4. Database Setup & Migrations
+### 3. Migrations & Seeding
 ```bash
+# Run migrations
 npx prisma migrate dev
+
+# Seed database with users, posts, and likes
+npm run seed
+# or
+npx prisma db seed
 ```
 
-### 5. Running the Application
+### 4. Running the Application
 ```bash
-# Start server in development mode
+# Development
 npm run dev
 
-# Or in production mode
+# Production
 npm start
 ```
 
-The server will run on `http://localhost:3000`.
-
 ## 📡 API Endpoints
 
-### Health Check
-- `GET /health` - Server health status
-
 ### Users
-- `GET /users` - Retrieve users
-- `POST /users` - Create a new user
-- `GET /users/:id` - Retrieve user by ID
-- `PUT /users/:id` - Update user details
-- `DELETE /users/:id` - Delete a user
+- `GET /users` - List users (supports `search`, `isPrivate`, `hasPosts`, pagination)
+- `POST /users` - Create user
+- `GET /users/:id` - Get user by ID (includes `_count: { posts, likes }`)
+- `PATCH /users/:id` - Update user details
+- `DELETE /users/:id` - Delete user (cascades to posts and likes)
+- `GET /users/:id/posts` - Paginated posts by user (newest first, includes `_count: { likes }`)
+- `GET /users/:id/liked-posts` - Paginated posts liked by user (newest first)
 
 ### Posts
-- `GET /posts` - Retrieve posts
-- `POST /posts` - Create a new post
-- `GET /posts/:id` - Retrieve post by ID
-- `PUT /posts/:id` - Update a post
-- `DELETE /posts/:id` - Delete a post
+- `GET /posts` - List posts (supports `search`, `location`, `sortBy=likes`, pagination, includes author summary and like count)
+- `POST /posts` - Create post (requires `imageUrl` and `authorId`)
+- `GET /posts/:id` - Get post by ID (includes author summary and like count)
+- `PATCH /posts/:id` - Update post caption or location (`authorId` immutable)
+- `DELETE /posts/:id` - Delete post (cascades to likes)
+- `GET /posts/:id/likes` - List user summaries who liked the post (sorted by username ascending)
+- `POST /posts/:id/likes` - Like a post (`userId` required, returns 409 if already liked)
+- `DELETE /posts/:id/likes/:userId` - Unlike a post (returns 204 or 404)
