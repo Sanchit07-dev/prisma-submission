@@ -8,5 +8,6 @@ router.get("/", usersController.list);
 router.get("/:id", usersController.getOne);
 router.patch("/:id", usersController.update);
 router.delete("/:id", usersController.remove);
+router.get("/:id/posts", usersController.getPosts);
 
 module.exports = router;
